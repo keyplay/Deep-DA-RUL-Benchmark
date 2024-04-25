@@ -47,8 +47,7 @@ if __name__ == '__main__':
           torch.manual_seed(seed)
           np.random.seed(seed)
           random.seed(seed)
-          #src_train_dl, src_test_dl = create_dataset_full(my_dataset[src_id], batch_size=params['batch_size'])
-          #tgt_train_dl, tgt_test_dl = create_dataset_full(my_dataset[tgt_id], batch_size=params['batch_size'])
+          
           src_train_dl = data_generator(data_path, src_id, dataset_configs, hparams, "train")
           src_test_dl = data_generator(data_path, src_id, dataset_configs, hparams, "test")
   
