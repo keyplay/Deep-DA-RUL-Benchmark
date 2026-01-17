@@ -12,7 +12,7 @@ import numpy as np
 import time
 from torch.utils.tensorboard import SummaryWriter
 import wandb
-from models.models import get_backbone_class, Model
+from models.models import get_backbone_class, Model, AdvSKM_Disc
 
 def cross_domain_train(device, dataset, dataset_configs, hparams, backbone, src_train_dl, src_test_dl, tgt_train_dl, tgt_test_dl, src_id, tgt_id, run_id):
 
@@ -23,7 +23,7 @@ def cross_domain_train(device, dataset, dataset_configs, hparams, backbone, src_
 
     # pretrained source model
     source_model = Model(dataset_configs, backbone).to(device) 
-
+    AdvSKM_embedder = AdvSKM_Disc(dataset_configs).to(device)
     print('=' * 89)
  
     if hparams['pretrain']:
@@ -47,6 +47,7 @@ def cross_domain_train(device, dataset, dataset_configs, hparams, backbone, src_
     mmd_criterion = MMDLoss()
     # optimizer
     target_optim = torch.optim.AdamW(target_model.parameters(), lr=hparams['learning_rate'], betas=(0.5, 0.9))   
+    optimizer_disc = torch.optim.Adam(AdvSKM_embedder.parameters(), lr=hparams["learning_rate"],weight_decay=hparams["weight_decay"])
     
     best_score, best_rmse, best_risk = 0, 0, 1e5        
     for epoch in range(1, hparams['num_epochs'] + 1):
@@ -62,15 +63,30 @@ def cross_domain_train(device, dataset, dataset_configs, hparams, backbone, src_
             target_optim.zero_grad()
 
             source_x, target_x, source_y = source_x.to(device), target_x.to(device), source_y.to(device) 
-            source_pred, source_features = source_model(source_x)              
-            _, target_features = target_model(target_x)
+            src_pred, src_feat = source_model(source_x)              
+            _, trg_feat = target_model(target_x)
 
-            domain_loss = mmd_criterion(source_features, target_features)
-            if hparams['pretrain']:
-                loss = domain_loss
-            else:
-                rul_loss = criterion(source_pred, source_y)
-                loss = domain_loss + rul_loss
+            source_embedding_disc = AdvSKM_embedder(src_feat.detach())
+            target_embedding_disc = AdvSKM_embedder(trg_feat.detach())
+            mmd_loss = - mmd_criterion(source_embedding_disc, target_embedding_disc)
+
+            # update discriminator
+            optimizer_disc.zero_grad()
+            mmd_loss.backward()
+            optimizer_disc.step()
+
+            # calculate source classification loss
+            src_cls_loss = criterion(src_pred.squeeze(), source_y)
+
+            # domain loss.
+            source_embedding_disc = AdvSKM_embedder(src_feat)
+            target_embedding_disc = AdvSKM_embedder(trg_feat)
+
+            mmd_loss_adv = mmd_criterion(source_embedding_disc, target_embedding_disc)
+
+            # calculate the total loss
+            loss = hparams["domain_loss_wt"] * mmd_loss_adv + hparams["src_cls_loss_wt"] * src_cls_loss
+            
             loss.backward()
             target_optim.step()
             total_loss += loss.item()

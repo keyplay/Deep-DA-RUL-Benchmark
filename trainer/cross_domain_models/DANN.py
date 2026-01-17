@@ -12,7 +12,7 @@ import numpy as np
 import time
 from torch.utils.tensorboard import SummaryWriter
 import wandb
-from models.models import get_backbone_class, Model
+from models.models import get_backbone_class, Model, Discriminator_DANN, ReverseLayerF
 
 def cross_domain_train(device, dataset, dataset_configs, hparams, backbone, src_train_dl, src_test_dl, tgt_train_dl, tgt_test_dl, src_id, tgt_id, run_id):
 
@@ -26,27 +26,20 @@ def cross_domain_train(device, dataset, dataset_configs, hparams, backbone, src_
 
     print('=' * 89)
  
-    if hparams['pretrain']:
-        source_model.load_state_dict(checkpoint['state_dict'])
-        source_model.eval()
-        set_requires_grad(source_model, requires_grad=False)
-        
-        # initialize target model
-        target_model = Model(dataset_configs, backbone).to(device)
-        target_model.load_state_dict(checkpoint['state_dict'])
-        target_encoder = target_model.feature_extractor
-        target_encoder.train()
-        set_requires_grad(target_encoder, requires_grad=True)
-    else:
-        source_model.train()
-        target_model = source_model
+
+    source_model.train()
+    target_model = source_model
 
     
     # criterion
     criterion = RMSELoss()
-    mmd_criterion = MMDLoss()
-    # optimizer
-    target_optim = torch.optim.AdamW(target_model.parameters(), lr=hparams['learning_rate'], betas=(0.5, 0.9))   
+    dis_critierion = nn.CrossEntropyLoss()
+    
+    domain_classifier = Discriminator_DANN(dataset_configs).to(device)
+    discriminator_optim = torch.optim.AdamW(domain_classifier.parameters(), lr=hparams['learning_rate'], betas=(0.5, 0.9))
+    target_optim = torch.optim.AdamW(target_model.parameters(), lr=hparams['learning_rate'], betas=(0.5, 0.9))
+    
+    num_batches = max(len(src_train_dl), len(tgt_train_dl))
     
     best_score, best_rmse, best_risk = 0, 0, 1e5        
     for epoch in range(1, hparams['num_epochs'] + 1):
@@ -57,22 +50,50 @@ def cross_domain_train(device, dataset, dataset_configs, hparams, backbone, src_
 
         total_loss = 0
         start_time = time.time()
-        for step, ((source_x, source_y), (target_x, _)) in joint_loader:
-            #print(source_y) 
+        
+        for step, ((src_x, src_y), (trg_x, _)) in joint_loader:
+            p = float(step + epoch * num_batches) / hparams["num_epochs"] + 1 / num_batches
+            alpha = 2. / (1. + np.exp(-10 * p)) - 1
+
+            src_x, src_y, trg_x = src_x.to(device), src_y.to(device), trg_x.to(device)
+
+            # zero grad
             target_optim.zero_grad()
+            discriminator_optim.zero_grad()
 
-            source_x, target_x, source_y = source_x.to(device), target_x.to(device), source_y.to(device) 
-            source_pred, source_features = source_model(source_x)              
-            _, target_features = target_model(target_x)
+            domain_label_src = torch.ones(len(src_x)).to(device)
+            domain_label_trg = torch.zeros(len(trg_x)).to(device)
 
-            domain_loss = mmd_criterion(source_features, target_features)
-            if hparams['pretrain']:
-                loss = domain_loss
-            else:
-                rul_loss = criterion(source_pred, source_y)
-                loss = domain_loss + rul_loss
+            src_pred, src_feat = target_model(src_x) 
+            _, trg_feat = target_model(trg_x)
+
+            # Task classification  Loss
+            src_cls_loss = criterion(src_pred.squeeze(), src_y)
+
+            # Domain classification loss
+            # source
+            src_feat_reversed = ReverseLayerF.apply(src_feat, alpha)
+            src_domain_pred = domain_classifier(src_feat_reversed)
+            src_domain_loss = dis_critierion(src_domain_pred, domain_label_src.long())
+
+            # target
+            trg_feat_reversed = ReverseLayerF.apply(trg_feat, alpha)
+            trg_domain_pred = domain_classifier(trg_feat_reversed)
+            trg_domain_loss = dis_critierion(trg_domain_pred, domain_label_trg.long())
+
+            # Total domain loss
+            domain_loss = src_domain_loss + trg_domain_loss
+            
+            #if step % 100 == 0:
+            loss = hparams["src_cls_loss_wt"] * src_cls_loss + hparams["domain_loss_wt"] * domain_loss
             loss.backward()
             target_optim.step()
+            discriminator_optim.step()
+#            else:
+#                loss = domain_loss
+#                loss.backward()
+#                discriminator_optim.step()
+                
             total_loss += loss.item()
                 
         mean_loss = total_loss / (step+1)
@@ -82,7 +103,7 @@ def cross_domain_train(device, dataset, dataset_configs, hparams, backbone, src_
         if epoch % 1 == 0:
             src_only_loss, src_only_score, _, _, _, _ = evaluate(source_model, tgt_test_dl, criterion, dataset_configs,device)
             test_loss, test_score, _, _, _, _ = evaluate(target_model, tgt_test_dl, criterion, dataset_configs,device)
-            src_risk, _, _, _, _, _ = evaluate(target_model, src_train_dl, criterion, dataset_configs, device)
+            src_risk, _, _, _, _, _ = evaluate(target_model, src_train_dl, criterion, dataset_configs, device, score_flag=False)
             if best_risk > src_risk:
                 best_rmse, best_score, best_risk = test_loss, test_score, src_risk
             print(f'Src_Only RMSE:{src_only_loss} \t Src_Only Score:{src_only_score}')

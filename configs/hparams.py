@@ -14,7 +14,8 @@ class CMAPSS():
             'weight_decay': 1e-4,
             'step_size': 50,
             'lr_decay': 0, #0.5
-            'pretrain': False
+            'pretrain': False,
+            "domain_loss_wt": 1,
 
         }
         self.alg_hparams = {
@@ -22,13 +23,19 @@ class CMAPSS():
             'TARGET_ONLY': {'learning_rate': 1e-3, 'trg_cls_loss_wt': 1},
             "DDC": {
                 "learning_rate": 5e-3,
-                "mmd_wt": 3.7991920933520342,
-                "src_cls_loss_wt": 6.286301875125623,
-                "domain_loss_wt": 6.36,
+                "src_cls_loss_wt": 1,
+                #"domain_loss_wt": 100,
                 "weight_decay": 0.0001
             },
             "ADARUL": {
                 "learning_rate": 5e-5,
+                "weight_decay": 0.0001,
+                "k_disc": 1,
+            },
+            "DANN": {
+                #"domain_loss_wt": 2.943729820531079,
+                "src_cls_loss_wt": 1,
+                "learning_rate": 5e-3,
                 "weight_decay": 0.0001,
                 "k_disc": 1,
             },
@@ -42,9 +49,34 @@ class CMAPSS():
                 "k_disc": 1
             },
             "Deep_Coral": {
-                "coral_wt": 4.23035475456397,
+                #"domain_loss_wt": 1e-3,
                 "learning_rate": 5e-3,
-                "src_cls_loss_wt": 0.1013209750429822,
+                "src_cls_loss_wt": 1,
+                "weight_decay": 0.0001
+            },
+            "SASA": {
+                #"domain_loss_wt": 1e-3,
+                "learning_rate": 5e-3,
+                "weight_decay": 0.0001,
+                "k_disc": 1,
+            },
+            "AdvSKM": {
+                #"domain_loss_wt": 1e-3,
+                "learning_rate": 5e-3,
+                "src_cls_loss_wt": 1,
+                "weight_decay": 0.0001
+            },
+            "HoMM": {
+                #"domain_loss_wt": 1.338788378230754,
+                "learning_rate": 5e-3,
+                "src_cls_loss_wt": 1,
+                "weight_decay": 0.0001
+            },
+            "consDANN": {
+                #"domain_loss_wt": 1.338788378230754,
+                "cons_loss_wt": 1,
+                "learning_rate": 5e-3,
+                "src_cls_loss_wt": 1,
                 "weight_decay": 0.0001
             },
         }
@@ -59,7 +91,8 @@ class NCMAPSS():
             'weight_decay': 1e-4,
             'step_size': 50,
             'lr_decay': 0.5,
-            'pretrain': False
+            'pretrain': False,
+            "domain_loss_wt": 1,
 
         }
         self.alg_hparams = {
@@ -67,28 +100,60 @@ class NCMAPSS():
             'TARGET_ONLY': {'learning_rate': 1e-3, 'trg_cls_loss_wt': 1},
             "DDC": {
                 "learning_rate": 5e-3,
-                "mmd_wt": 3.7991920933520342,
-                "src_cls_loss_wt": 6.286301875125623,
-                "domain_loss_wt": 6.36,
+                "src_cls_loss_wt": 1,
+                #"domain_loss_wt": 100,
                 "weight_decay": 0.0001
             },
             "ADARUL": {
-                "learning_rate": 5e-5,
+                "learning_rate": 5e-4,
+                "weight_decay": 0.0001,
+                "k_disc": 1,
+            },
+            "DANN": {
+                #"domain_loss_wt": 2.943729820531079,
+                "src_cls_loss_wt": 1,
+                "learning_rate": 5e-3,
                 "weight_decay": 0.0001,
                 "k_disc": 1,
             },
             "CADA": {
                 "nce_loss_wt": 0.2,
-                "learning_rate": 5e-5,
+                "learning_rate": 5e-4,
+                "pretrain_learning_rate": 0.001,
                 "nce_learning_rate": 0.01,
-                "src_cls_loss_wt": 5.1390077646202,
+                "src_cls_loss_wt": 1,
                 "weight_decay": 0.0001,
                 "k_disc": 1
             },
             "Deep_Coral": {
-                "coral_wt": 4.23035475456397,
+                #"domain_loss_wt": 1e-3,
                 "learning_rate": 5e-3,
-                "src_cls_loss_wt": 0.1013209750429822,
+                "src_cls_loss_wt": 1,
+                "weight_decay": 0.0001
+            },
+            "SASA": {
+                #"domain_loss_wt": 1e-3,
+                "learning_rate": 5e-3,
+                "weight_decay": 0.0001,
+                "k_disc": 1,
+            },
+            "AdvSKM": {
+                #"domain_loss_wt": 1e-3,
+                "learning_rate": 5e-3,
+                "src_cls_loss_wt": 1,
+                "weight_decay": 0.0001
+            },
+            "HoMM": {
+                #"domain_loss_wt": 1.338788378230754,
+                "learning_rate": 5e-3,
+                "src_cls_loss_wt": 1,
+                "weight_decay": 0.0001
+            },
+            "consDANN": {
+                #"domain_loss_wt": 1.338788378230754,
+                "cons_loss_wt": 1,
+                "learning_rate": 5e-3,
+                "src_cls_loss_wt": 1,
                 "weight_decay": 0.0001
             },
         }

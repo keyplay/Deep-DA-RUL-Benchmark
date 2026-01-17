@@ -12,41 +12,44 @@ import numpy as np
 import time
 from torch.utils.tensorboard import SummaryWriter
 import wandb
-from models.models import get_backbone_class, Model
+from models.models import get_backbone_class, regressor, CNN_ATTN
+
+def mmd_loss(src_struct, tgt_struct, weight):
+        delta = torch.mean(src_struct - tgt_struct, dim=-2)
+        loss_value = torch.norm(delta, 2) * weight
+        return loss_value
+        
+class SASA(nn.Module):
+    def __init__(self, feature_extractor, predictor):
+        super(SASA, self).__init__()
+        self.feature_extractor = feature_extractor
+        self.predictor = predictor
+
+    def forward(self, x):
+        fea = self.feature_extractor(x)
+        pred = self.predictor(fea)
+        return pred, fea
 
 def cross_domain_train(device, dataset, dataset_configs, hparams, backbone, src_train_dl, src_test_dl, tgt_train_dl, tgt_test_dl, src_id, tgt_id, run_id):
 
     print(f'From_source:{src_id}--->target:{tgt_id}...')
 
-    print('Restore source pre_trained model...')
-    checkpoint = torch.load(f'./trained_models/{dataset}/single_domain/pretrained_{backbone}_{src_id}.pt')
-
-    # pretrained source model
-    source_model = Model(dataset_configs, backbone).to(device) 
-
     print('=' * 89)
  
-    if hparams['pretrain']:
-        source_model.load_state_dict(checkpoint['state_dict'])
-        source_model.eval()
-        set_requires_grad(source_model, requires_grad=False)
-        
-        # initialize target model
-        target_model = Model(dataset_configs, backbone).to(device)
-        target_model.load_state_dict(checkpoint['state_dict'])
-        target_encoder = target_model.feature_extractor
-        target_encoder.train()
-        set_requires_grad(target_encoder, requires_grad=True)
-    else:
-        source_model.train()
-        target_model = source_model
+    predictor = regressor(dataset_configs)
+    # feature length for feature extractor
+    #dataset_configs.features_len = 1
+    feature_extractor = CNN_ATTN(dataset_configs)
+    source_model = SASA(feature_extractor, predictor).to(device)
+    
+    source_model.train()
+    target_model = source_model
 
     
     # criterion
     criterion = RMSELoss()
-    mmd_criterion = MMDLoss()
     # optimizer
-    target_optim = torch.optim.AdamW(target_model.parameters(), lr=hparams['learning_rate'], betas=(0.5, 0.9))   
+    target_optim = torch.optim.AdamW(source_model.parameters(), lr=hparams['learning_rate'], betas=(0.5, 0.9))   
     
     best_score, best_rmse, best_risk = 0, 0, 1e5        
     for epoch in range(1, hparams['num_epochs'] + 1):
@@ -62,15 +65,16 @@ def cross_domain_train(device, dataset, dataset_configs, hparams, backbone, src_
             target_optim.zero_grad()
 
             source_x, target_x, source_y = source_x.to(device), target_x.to(device), source_y.to(device) 
-            source_pred, source_features = source_model(source_x)              
-            _, target_features = target_model(target_x)
+            
+            source_features = feature_extractor(source_x)    
+            source_pred = predictor(source_features)       
+            target_features = feature_extractor(target_x)
 
-            domain_loss = mmd_criterion(source_features, target_features)
-            if hparams['pretrain']:
-                loss = domain_loss
-            else:
-                rul_loss = criterion(source_pred, source_y)
-                loss = domain_loss + rul_loss
+            domain_loss = mmd_loss(source_features, target_features, hparams['domain_loss_wt'])
+
+            rul_loss = criterion(source_pred.squeeze(), source_y)
+
+            loss = domain_loss + rul_loss
             loss.backward()
             target_optim.step()
             total_loss += loss.item()

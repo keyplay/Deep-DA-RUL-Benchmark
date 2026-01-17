@@ -44,7 +44,7 @@ def cross_domain_train(device, dataset, dataset_configs, hparams, backbone, src_
     
     # criterion
     criterion = RMSELoss()
-    mmd_criterion = MMDLoss()
+    homm_loss = HoMM_loss()
     # optimizer
     target_optim = torch.optim.AdamW(target_model.parameters(), lr=hparams['learning_rate'], betas=(0.5, 0.9))   
     
@@ -65,12 +65,13 @@ def cross_domain_train(device, dataset, dataset_configs, hparams, backbone, src_
             source_pred, source_features = source_model(source_x)              
             _, target_features = target_model(target_x)
 
-            domain_loss = mmd_criterion(source_features, target_features)
+            domain_loss = homm_loss(source_features, target_features)
             if hparams['pretrain']:
                 loss = domain_loss
             else:
-                rul_loss = criterion(source_pred, source_y)
-                loss = domain_loss + rul_loss
+                rul_loss = criterion(source_pred.squeeze(), source_y)
+                loss = hparams['domain_loss_wt']*domain_loss + hparams["src_cls_loss_wt"] *rul_loss
+                #print(domain_loss, rul_loss)
             loss.backward()
             target_optim.step()
             total_loss += loss.item()

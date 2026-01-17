@@ -30,7 +30,7 @@ def train(model, train_dl, optimizer, criterion,config,device):
 
 
 
-def evaluate(model, test_dl, criterion, config, device, denorm_flag=True):
+def evaluate(model, test_dl, criterion, config, device, denorm_flag=True, score_flag=True):
     model.eval()
     total_feas=[];total_labels=[]
     epoch_loss = 0
@@ -50,7 +50,10 @@ def evaluate(model, test_dl, criterion, config, device, denorm_flag=True):
                 if labels.max() <= 1:
                     labels = labels * config.max_rul
             rul_loss = criterion(pred.squeeze(), labels)
-            score = scoring_func(pred.squeeze() - labels)
+            
+            if score_flag: score = scoring_func(pred.squeeze() - labels)
+            else: score = 0
+            
             epoch_loss += rul_loss.item()
             epoch_score += score
             total_feas.append(feat)

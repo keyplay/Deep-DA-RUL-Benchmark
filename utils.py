@@ -47,9 +47,9 @@ def scoring_func(error_arr):
     neg_error_arr = error_arr[error_arr < 0]
     score = 0 
     for error in neg_error_arr:
-            score = math.exp(-(error / 13)) - 1 + score 
+        score = math.exp(-(error / 13)) - 1 + score 
     for error in pos_error_arr: 
-            score = math.exp(error / 10) - 1 + score
+        score = math.exp(error / 10) - 1 + score
     return score
 
 def roll(x, shift: int, dim: int = -1, fill_pad: int = None):
@@ -202,3 +202,25 @@ def CORAL(source, target, **kwargs):
     loss = torch.mul((xc - xct), (xc - xct))
     loss = torch.sum(loss)# / (4*d*d)
     return loss
+
+class HoMM_loss(nn.Module):
+    def __init__(self):
+        super(HoMM_loss, self).__init__()
+
+    def forward(self, xs, xt):
+        xs = xs - torch.mean(xs, axis=0)
+        xt = xt - torch.mean(xt, axis=0)
+        xs = torch.unsqueeze(xs, axis=-1)
+        xs = torch.unsqueeze(xs, axis=-1)
+        xt = torch.unsqueeze(xt, axis=-1)
+        xt = torch.unsqueeze(xt, axis=-1)
+        xs_1 = xs.permute(0, 2, 1, 3)
+        xs_2 = xs.permute(0, 2, 3, 1)
+        xt_1 = xt.permute(0, 2, 1, 3)
+        xt_2 = xt.permute(0, 2, 3, 1)
+        HR_Xs = xs * xs_1 * xs_2  # dim: b*L*L*L
+        HR_Xs = torch.mean(HR_Xs, axis=0)  # dim: L*L*L
+        HR_Xt = xt * xt_1 * xt_2
+        HR_Xt = torch.mean(HR_Xt, axis=0)
+        return torch.mean((HR_Xs - HR_Xt) ** 2)
+        

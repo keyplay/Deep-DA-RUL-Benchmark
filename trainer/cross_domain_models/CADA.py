@@ -132,4 +132,4 @@ def cross_domain_train(device, dataset, dataset_configs, hparams, backbone, src_
     print(f'Src_Only RMSE:{src_only_loss} \t Src_Only Score:{src_only_score}')
     print(f'After DA RMSE:{test_loss} \t After DA Score:{test_score}')
    
-    return src_only_loss, src_only_score, best_rmse, best_score
+    return best_risk, src_only_score, best_rmse, best_score

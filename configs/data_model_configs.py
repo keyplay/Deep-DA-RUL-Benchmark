@@ -7,8 +7,8 @@ def get_dataset_class(dataset_name):
 class CMAPSS():
     def __init__(self):
         super(CMAPSS, self)
-        self.scenarios = [("FD001", "FD002"), ("FD001", "FD003"), ("FD001", "FD004"), ("FD002", "FD001"), ("FD002", "FD003"), ("FD002", "FD004"),("FD003", "FD001"), ("FD003", "FD002"), ("FD003", "FD004"), ("FD004", "FD001"), ("FD004", "FD002"), ("FD004", "FD003")]
-        #self.scenarios = [("FD001", "FD004"), ("FD002", "FD001"), ("FD002", "FD003"), ("FD002", "FD004"),("FD003", "FD001"), ("FD003", "FD002"), ("FD003", "FD004"), ("FD004", "FD001"), ("FD004", "FD002"), ("FD004", "FD003")]
+        self.scenarios = [("FD001", "FD002"), ("FD001", "FD003"), ("FD001", "FD004"), ("FD002", "FD001"), ("FD002", "FD003"), ("FD002", "FD004"),("FD003", "FD001"), ("FD003", "FD002"), ("FD003", "FD004"), ("FD004", "FD001"),("FD004", "FD002"), ("FD004", "FD003")]
+        #self.scenarios = [("FD004", "FD002"), ("FD004", "FD003")]
         self.sequence_len = 30
         self.max_rul = 130
         self.shuffle = True
@@ -26,7 +26,7 @@ class CMAPSS():
         # CNN and RESNET features
         self.mid_channels = 32
         self.final_out_channels = 32
-        self.features_len = 64 # 150 #128 #64
+        self.features_len = 64 # 150 #128 #64 for CNN, 32 for SASA
 
         # TCN features
         self.tcn_layers = [32, 64]
@@ -48,7 +48,7 @@ class NCMAPSS():
     def __init__(self):
         super(NCMAPSS, self)
         self.scenarios = [("DS01", "DS02"), ("DS01", "DS03"), ("DS02", "DS01"), ("DS02", "DS03"), ("DS03", "DS01"), ("DS03", "DS02")]
-        #self.scenarios = [("DS03", "DS02")]
+        #self.scenarios = [("DS01", "DS02")]
         self.sequence_len = 50
         self.max_rul = 88
         self.shuffle = True
