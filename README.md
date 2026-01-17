@@ -1,4 +1,4 @@
-# Deep domain adaptation for turbofan engine remaining useful life prediction: Methodologies, evaluation and future trends
+# Deep Domain Adaptation for Turbofan Engine Remaining Useful Life Prediction: Methodologies, Evaluation and Future Trends
 #### *by: Yucheng Wang, Mohamed Ragab, Yubo Hou, Zhenghua Chen, Min Wu, and Xiaoli Li*
 
 ## Requirmenets:
