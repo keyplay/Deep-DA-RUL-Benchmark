@@ -12,6 +12,10 @@
 - [HoMM](https://arxiv.org/abs/1912.11976)
 - [AdvSKM](https://www.ijcai.org/proceedings/2021/0378.pdf)
 
+## Supported Dataset
+- [C-MAPSS](https://ieeexplore.ieee.org/document/4711414)
+- [N-CMAPSS](https://www.mdpi.com/2306-5729/6/1/5)
+
 ## Requirmenets:
 - Python3.x
 - Pytorch==1.12.1
