@@ -74,17 +74,14 @@ def main():
     unique_src_id = {src_id for src_id, tgt_id in dataset_configs.scenarios}
     for src_id in unique_src_id: #['DS01', 'DS02', 'DS03', 'DS04']:#['FD001', 'FD002', 'FD003', 'FD004']:
         print('Initializing model for', src_id)
-        #source_model = CNN_RUL(dataset_configs.input_channels, 32, 0.5).to(device)
+        
         source_model = Model(dataset_configs, backbone).to(device)
-        #source_model = LSTM_RUL(14, 32, 5, 0.5, True, device).to(device)
-        #source_model.apply(weights_init)
+
         print('=' * 89)
         print(f'The {backbone} has {count_parameters(source_model):,} trainable parameters')
         print('=' * 89)
         print('Load_source_target datasets...')
-        src_train_dl, src_test_dl = create_dataset_full(my_dataset[src_id], batch_size=params['batch_size'])
-        #src_train_dl = data_generator(data_path, src_id, dataset_configs, hparams, "train")
-        #src_test_dl = data_generator(data_path, src_id, dataset_configs, hparams, "test")  
+        src_train_dl, src_test_dl = create_dataset_full(my_dataset[src_id], batch_size=params['batch_size']) 
             
         trained_source_model = pre_train(source_model, src_train_dl, src_test_dl, src_id, dataset_configs, params)
         # saving last epoch model
