@@ -19,9 +19,6 @@ def cross_domain_train(device, dataset, dataset_configs, hparams, backbone, src_
 
     print('Restore source pre_trained model...')
     checkpoint = torch.load(f'./trained_models/{dataset}/single_domain/pretrained_{backbone}_{src_id}.pt')
-    #checkpoint = torch.load(f'./trained_models/pretrained_{backbone}_{src_id}_new.pt')
-    # pretrained source model
-    #source_model = LSTM_RUL(14, 32, 5, 0.5, True, device).to(device)
     source_model = Model(dataset_configs, backbone).to(device) 
 
     print('=' * 89)
