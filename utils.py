@@ -1,8 +1,3 @@
-
-"""
-Created on Wed Sep 18 20:27:19 2019
-@author: MOHAMEDR002
-"""
 import numpy as np
 import torch
 import random
@@ -15,20 +10,7 @@ from torch.autograd import Function
 import torch.nn.functional as F
 device = torch.device('cuda')
 
-# class MyDataset(Dataset):
-#     def __init__(self,  data,labels):
-#         """Reads source and target sequences from processing file ."""
-#         self.input_tensor=(torch.from_numpy(data)).float()
-#
-#         self.label=(torch.torch.FloatTensor(labels))
-#         self.num_total_seqs = len(self.input_tensor)
-#     def __getitem__(self, index):
-#         """Returns one data pair (source and target)."""
-#         input_seq = self.input_tensor[index]
-#         input_labels = self.label[index]
-#         return input_seq,input_labels
-#     def __len__(self):
-#         return self.num_total_seqs
+
 def set_requires_grad(model, requires_grad=True):
     for param in model.parameters():
         param.requires_grad = requires_grad
