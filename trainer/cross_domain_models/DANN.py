@@ -84,15 +84,10 @@ def cross_domain_train(device, dataset, dataset_configs, hparams, backbone, src_
             # Total domain loss
             domain_loss = src_domain_loss + trg_domain_loss
             
-            #if step % 100 == 0:
             loss = hparams["src_cls_loss_wt"] * src_cls_loss + hparams["domain_loss_wt"] * domain_loss
             loss.backward()
             target_optim.step()
             discriminator_optim.step()
-#            else:
-#                loss = domain_loss
-#                loss.backward()
-#                discriminator_optim.step()
                 
             total_loss += loss.item()
                 
