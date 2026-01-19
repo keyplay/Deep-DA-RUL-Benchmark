@@ -38,7 +38,6 @@ def cross_domain_train(device, dataset, dataset_configs, hparams, backbone, src_
  
     predictor = regressor(dataset_configs)
     # feature length for feature extractor
-    #dataset_configs.features_len = 1
     feature_extractor = CNN_ATTN(dataset_configs)
     source_model = SASA(feature_extractor, predictor).to(device)
     
