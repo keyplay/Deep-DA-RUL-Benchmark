@@ -2,7 +2,7 @@
 #### *by: Yucheng Wang, Mohamed Ragab, Yubo Hou, Zhenghua Chen, Min Wu, and Xiaoli Li*
 
 ## Supported Method
-- Source Only
+- Source Only (without domain adaptation)
 - [DDC](https://arxiv.org/abs/1412.3474)
 - [Deep Coral](https://arxiv.org/abs/1612.01939)
 - [DANN](https://arxiv.org/abs/1505.07818)
